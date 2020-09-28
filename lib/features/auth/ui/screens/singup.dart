@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:food_app/features/auth/auth.dart';
+import 'package:food_app/features/auth/ui/screens/login.dart';
+import 'package:food_app/features/firestore_operations/models/user.dart';
+import 'package:food_app/features/firestore_operations/repoisrore/clinte.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -8,13 +12,16 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-  final _registerFormKey = GlobalKey<FormState>();
-  // final FirebaseRepository firebaseRepository = FirebaseRepository();
+  String email, password;
+  final _formKey = new GlobalKey<FormState>();
+  final TextEditingController email_control = TextEditingController();
+  TextEditingController password_control = TextEditingController();
+  TextEditingController conpassword_control = TextEditingController();
 
-  String _firstName = '';
-  String _lastName = '';
-  String email = '';
-  String _password = '';
+  final TextEditingController name_control = TextEditingController();
+  TextEditingController phone_control = TextEditingController();
+  TextEditingController address_control = TextEditingController();
+  SharedPreferences prefs;
   @override
   void initState() {
     SystemChrome.setEnabledSystemUIOverlays([]);
@@ -23,17 +30,10 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    // final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-    // final TextEditingController _emailController = TextEditingController();
-    // final TextEditingController _passwordController = TextEditingController();
-    // final TextEditingController _nameController = TextEditingController();
-    // bool _success;
-    // String _userEmail;
-
     return Scaffold(
         body: Container(
       child: Form(
-        key: _registerFormKey,
+        key: _formKey,
         child: ListView(
           children: <Widget>[
             Container(
@@ -53,25 +53,20 @@ class _SignupPageState extends State<SignupPage> {
                   Spacer(),
                   Align(
                     alignment: Alignment.center,
-                    child:
-                        // Container(
-                        // child: Row(
-                        // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        //children: <Widget>[
-                        Container(
-                            margin: const EdgeInsets.all(0),
-                            padding: const EdgeInsets.all(20.0),
-                            decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10.0))),
-                            child: IconButton(
-                                icon: Icon(
-                                  Icons.person_add,
-                                  color: Colors.black,
-                                  size: 30,
-                                ),
-                                onPressed: null)),
+                    child: Container(
+                        margin: const EdgeInsets.all(0),
+                        padding: const EdgeInsets.all(20.0),
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10.0))),
+                        child: IconButton(
+                            icon: Icon(
+                              Icons.person_add,
+                              color: Colors.black,
+                              size: 30,
+                            ),
+                            onPressed: null)),
                     //)
                   ),
                   Spacer(),
@@ -106,6 +101,7 @@ class _SignupPageState extends State<SignupPage> {
                           BoxShadow(color: Colors.black12, blurRadius: 5)
                         ]),
                     child: TextFormField(
+                      controller: name_control,
                       validator: (String value) {
                         if (value.isEmpty) {
                           return 'Please enter a first name';
@@ -113,7 +109,7 @@ class _SignupPageState extends State<SignupPage> {
                         return null;
                       },
                       // decoration: InputDecoration(labelText: "First Name"),
-                      onSaved: (value) => _firstName = value,
+                      //  onSaved: (value) => name_control = value,
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: 'Full Name',
@@ -157,6 +153,7 @@ class _SignupPageState extends State<SignupPage> {
                     //                ),
                     //             ),
                     child: TextFormField(
+                      controller: phone_control,
                       validator: (String value) {
                         if (value.isEmpty) {
                           return 'Please enter a last name';
@@ -164,7 +161,7 @@ class _SignupPageState extends State<SignupPage> {
                         return null;
                       },
                       //    decoration: InputDecoration(labelText: "Last Name"),
-                      onSaved: (value) => _lastName = value,
+                      // onSaved: (value) => _lastName = value,
                       // TextField(
                       decoration: InputDecoration(
                         border: InputBorder.none,
@@ -187,9 +184,10 @@ class _SignupPageState extends State<SignupPage> {
                           BoxShadow(color: Colors.black12, blurRadius: 5)
                         ]),
                     child: TextFormField(
+                      controller: email_control,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(labelText: "Email Address"),
-                      onSaved: (value) => email = value,
+                      decoration: InputDecoration(hintText: "Email Address"),
+                      //onSaved: (value) => email = value,
                       validator: (String value) {
                         if (value.isEmpty) {
                           return 'Please enter an email';
@@ -227,6 +225,7 @@ class _SignupPageState extends State<SignupPage> {
                         ]),
 
                     child: TextFormField(
+                      controller: password_control,
                       validator: (String value) {
                         if (value.isEmpty) {
                           return 'Please enter a password';
@@ -236,9 +235,9 @@ class _SignupPageState extends State<SignupPage> {
                         }
                         return null;
                       },
-                      obscureText: true,
-                      decoration: InputDecoration(labelText: "Password"),
-                      onSaved: (value) => _password = value,
+                      //   obscureText: true,
+                      decoration: InputDecoration(hintText: "Password"),
+                      //onSaved: (value) => _password = value,
                     ),
                     // child: TextField(
                     //   obscureText: true,
@@ -253,11 +252,8 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                   InkWell(
                     onTap: () {
-                      //                    validateAndRegisterUser;
-                      // setState(() {
-
-                      // });
-                      //  Navigator.pushNamed(context, '/');
+                      validateAndSubmit(context);
+                     
                     },
                     child: Container(
                       height: 45,
@@ -303,41 +299,45 @@ class _SignupPageState extends State<SignupPage> {
       ),
     ));
   }
-}
-// validateAndRegisterUser() async {
-//     final form = _registerFormKey.currentState;
-//     form.save();
-//     // Validate information was correctly entered
-//     if (form.validate()) {
-//       print('Form was successfully validated');
-//       print('Registering user: First Name: $_firstName | Last Name: $_lastName Email: | $_email Password: $_password');
-//       // Call the login method with the enter information
-//       registerUserWithEmailAndPassword();
-//     }
-//   }
 
-//   void registerUserWithEmailAndPassword() async {
-//     try {
-//       FirebaseUser newUser =
-//           await Provider.of<AuthService>(context, listen: false)
-//               .registerUserWithEmailAndPassword(
-//                   firstName: _firstName,
-//                   lastName: _lastName,
-//                   email: _email,
-//                   password: _password);
-//       if(newUser != null) {
-//         print('Registered user: ${newUser.uid} | Name: ${newUser.displayName} | Email: ${newUser.email} | Password: $_password}');
-//         // Create a new user in the database
-//         firebaseRepository.createUserInDatabaseWithEmail(newUser);
-//         /// Make sure user was also signed in after registration
-//         FirebaseUser currentUser = await Provider.of<AuthService>(context, listen: false).getUser();
-//         if(currentUser != null) {
-//           print('Registered user was signed in: ${currentUser.uid}');
-//           List<MessageCard> personalMessages = await firebaseRepository.getPersonalMessages(currentUser);
-//           for(MessageCard messageCard in personalMessages) {
-//             print(messageCard);
-//           }
-//         }
-//         else {
-//           print('User was registered but not signed in!');
-//         }
+  void validateAndSubmit(BuildContext context) async {
+    prefs = await Auth.auth.instializeSp();
+
+    if (_formKey.currentState.validate()) {
+      //  if (password_control.text == conpassword_control.text) {
+      _formKey.currentState.save();
+
+      String user_id = await Auth.auth
+          .signUp(email_control.text, password_control.text) as String;
+      if (user_id != null) {
+        prefs.setString(spUserEmail, email_control.text);
+        prefs.setString(userId, user_id);
+        prefs.setBool(isLogged, true);
+        prefs.setString(spUserName, name_control.text);
+        prefs.setString(spUserPhone, phone_control.text);
+        prefs.setString(spUserPassword, password_control.text);
+
+        UserModel userModel = UserModel(user_id, name_control.text,
+            email_control.text, phone_control.text, password_control.text);
+        Client.client.adduser(userModel);
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => LoginPage()),
+            (Route<dynamic> route) => false);
+      }
+    } else {
+      password_control.clear();
+      conpassword_control.clear();
+    }
+  }
+}
+//}
+
+final String spUserEmail = 'userName';
+final String spUserName = 'userEmail';
+final String spUserPhone = 'userPhone';
+final String spUserAddress = 'userAddress';
+final String spUserPassword = 'userPassword';
+final String userId = 'userId';
+final String isLogged = 'isLogged';
+
+
