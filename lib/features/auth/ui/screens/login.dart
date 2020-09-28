@@ -148,12 +148,8 @@ class _LoginPageState extends State<LoginPage> {
                   Spacer(),
                   InkWell(
                     onTap: () {
-                       // validateAndSubmit(context);
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) {
-                          return Homepage();
-                        }),
-                      );
+                        validateAndSubmit(context);
+                    
                     
                     },
                     child: Container(
