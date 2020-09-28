@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:food_app/features/auth/auth.dart';
+import 'package:food_app/features/auth/ui/screens/first.dart';
 import 'package:food_app/features/auth/ui/screens/home.dart';
 import 'package:food_app/features/auth/ui/screens/singup.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -11,6 +14,11 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  String email, password;
+  final _formKey = new GlobalKey<FormState>();
+  TextEditingController email_control = TextEditingController();
+  TextEditingController password_control = TextEditingController();
+  SharedPreferences prefs;
   @override
   void initState() {
     SystemChrome.setEnabledSystemUIOverlays([]);
@@ -20,7 +28,8 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
+      key: _formKey,
+      body: Form(
         child: ListView(
           children: <Widget>[
             Container(
@@ -77,14 +86,21 @@ class _LoginPageState extends State<LoginPage> {
                         boxShadow: [
                           BoxShadow(color: Colors.black12, blurRadius: 5)
                         ]),
-                    child: TextField(
+                    child: TextFormField(
+                      validator: (String value) {
+                        if (value.isEmpty) {
+                          return 'Please enter a first name';
+                        }
+                        return null;
+                      },
+                      controller: email_control,
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         icon: Icon(
-                          Icons.person,
+                          Icons.alternate_email,
                           color: Color(0xff6bceff),
                         ),
-                        hintText: 'Username',
+                        hintText: 'Email',
                       ),
                     ),
                   ),
@@ -100,7 +116,14 @@ class _LoginPageState extends State<LoginPage> {
                         boxShadow: [
                           BoxShadow(color: Colors.black12, blurRadius: 5)
                         ]),
-                    child: TextField(
+                    child: TextFormField(
+                      validator: (String value) {
+                        if (value.isEmpty) {
+                          return 'Please enter a first name';
+                        }
+                        return null;
+                      },
+                      controller: password_control,
                       obscureText: true,
                       decoration: InputDecoration(
                         border: InputBorder.none,
@@ -125,12 +148,13 @@ class _LoginPageState extends State<LoginPage> {
                   Spacer(),
                   InkWell(
                     onTap: () {
+                       // validateAndSubmit(context);
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (context) {
                           return Homepage();
                         }),
                       );
-                      // Navigator.pushNamed(context, '/');
+                    
                     },
                     child: Container(
                       height: 45,
@@ -182,66 +206,32 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+
+  void validateAndSubmit(BuildContext context) async {
+    prefs = await Auth.auth.instializeSp();
+
+    if (_formKey.currentState.validate()) {
+      _formKey.currentState.save();
+
+      String user_id = await Auth.auth
+          .singIn(email_control.text, password_control.text) as String;
+      if (user_id != null) {
+        prefs.setString(spUserEmail, email_control.text);
+        prefs.setString(userId, user_id);
+        prefs.setBool(isLogged, true);
+        prefs.setString(spUserPassword, password_control.text);
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => Homepage()),
+            (Route<dynamic> route) => false);
+      }
+    }
+  }
 }
 
-// import 'package:flutter/material.dart';
-// //import 'login_screen.dart';
-// //import 'package:flutter_login/theme.dart';
-// //import 'dashboard_screen.dart';
-// import 'package:flutter_login/flutter_login.dart';
-// import 'package:food_app/homepage.dart';
-
-// // void main() => runApp(MyApp());
-
-// class MyAppp extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Login Demo',
-//       theme: ThemeData(
-//         primarySwatch: Colors.blue,
-//         accentColor: Colors.orange,
-//         cursorColor: Colors.orange,
-//         textTheme: TextTheme(
-//           display2: TextStyle(
-//             fontFamily: 'OpenSans',
-//             fontSize: 45.0,
-//             color: Colors.orange,
-//           ),
-//           button: TextStyle(
-//             fontFamily: 'OpenSans',
-//           ),
-//           subhead: TextStyle(fontFamily: 'NotoSans'),
-//           body1: TextStyle(fontFamily: 'NotoSans'),
-//         ),
-//       ),
-//       home: LoginScreen(),
-//     );
-//   }
-// }
-
-// // login_screen.dart
-// // import 'package:flutter/material.dart';
-// // import 'package:flutter_login/flutter_login.dart';
-// // import 'dashboard_screen.dart';
-
-// class LoginScreen extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return FlutterLogin(
-//       title: 'Recipe',
-//       logo: 'assets/images/main.jpg',
-//       onLogin: (_) => Future(null),
-//           //   Navigator.of(context).push(MaterialPageRoute(builder: (context){
-//       //   return
-//       // }))),
-//       onSignup: (_) => Future(null),
-//       onSubmitAnimationCompleted: () {
-//         // Navigator.of(context).pushReplacement(MaterialPageRoute(
-//         //   builder: (context) => DashboardScreen(),
-//         // ));
-//       },
-//       onRecoverPassword: (_) => Future(null),
-//     );
-//   }
-// }
+final String spUserEmail = 'userName';
+final String spUserName = 'userEmail';
+final String spUserPhone = 'userPhone';
+final String spUserAddress = 'userAddress';
+final String spUserPassword = 'userPassword';
+final String userId = 'userId';
+final String isLogged = 'isLogged';
