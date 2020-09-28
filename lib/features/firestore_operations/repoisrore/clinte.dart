@@ -3,6 +3,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 
 import 'package:food_app/features/firestore_operations/models/recipe.dart';
+import 'package:food_app/features/firestore_operations/models/user.dart';
 
 class Client {
   final String recipeCollection = 'Recipe';
@@ -97,6 +98,33 @@ class Client {
           .collection(recipeCollection)
           .document(recipe.documentId)
           .setData(recipe.toJson());
+    } catch (error) {
+      print(error);
+    }
+  }
+
+  Future<String> adduser(UserModel userModel) async {
+    try {
+      firestore = Firestore.instance;
+      await firestore
+          .collection('UsersCollection')
+          .document(userModel.user_id)
+          .setData(userModel.toJson());
+    } catch (error) {
+      print(error);
+    }
+  }
+
+  Future<UserModel> getuserdata(String id) async {
+    try {
+      firestore = Firestore.instance;
+      UserModel userModel = await firestore
+          .collection('UsersCollection')
+          .document(id)
+          .get()
+          .then((value) => UserModel.fromDocumentSnapshot(value));
+
+      return userModel;
     } catch (error) {
       print(error);
     }
